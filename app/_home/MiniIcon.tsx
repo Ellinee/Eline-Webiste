@@ -1,13 +1,10 @@
-import { BellRinging, Heartbeat, HouseLine, Robot, ShieldCheck, Sparkle, type Icon } from "@phosphor-icons/react";
+import { Heartbeat, Robot, ShieldCheck, type Icon } from "@phosphor-icons/react";
 
-type IconType = "alert" | "device" | "care" | "scene" | "home" | "shield";
+type IconType = "device" | "care" | "shield";
 
 const icons: Record<IconType, Icon> = {
-  alert: BellRinging,
   device: Robot,
   care: Heartbeat,
-  scene: Sparkle,
-  home: HouseLine,
   shield: ShieldCheck,
 };
 

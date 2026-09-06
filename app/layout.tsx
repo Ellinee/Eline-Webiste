@@ -1,21 +1,21 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const siteUrl = "https://eldora.my.id";
-const title = "Eldora - Elderly care, made calmer";
+const siteUrl = "https://eline-id.com";
+const title = "Eline - Elderly care, made calmer";
 const description =
-  "Eldora helps families monitor elderly care through safety alerts, DoraBot device status, wellness summaries, and calm caregiver updates.";
+  "Eline helps families monitor elderly care through safety alerts, DoraBot device status, wellness summaries, and calm caregiver updates.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: title,
-    template: "%s | Eldora",
+    template: "%s | Eline",
   },
   description,
-  applicationName: "Eldora",
+  applicationName: "Eline",
   keywords: [
-    "Eldora",
+    "Eline",
     "elderly care app",
     "caregiver app",
     "fall alerts",
@@ -24,16 +24,16 @@ export const metadata: Metadata = {
     "DoraShield",
     "wellness monitoring",
   ],
-  authors: [{ name: "Eldora" }],
-  creator: "Eldora",
-  publisher: "Eldora",
+  authors: [{ name: "Eline" }],
+  creator: "Eline",
+  publisher: "Eline",
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     url: "/",
-    siteName: "Eldora",
+    siteName: "Eline",
     title,
     description,
     images: [
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
         url: "/mockups/screen-1.jpg",
         width: 1080,
         height: 2400,
-        alt: "Eldora mobile app dashboard preview",
+        alt: "Eline mobile app dashboard preview",
       },
     ],
   },

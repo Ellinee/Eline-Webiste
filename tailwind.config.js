@@ -6,7 +6,7 @@ const config = {
   theme: {
     extend: {
       colors: {
-        eldora: {
+        eline: {
           text: "#17202A",
           muted: "#5F6B7A",
           line: "#E7E1DA",
@@ -20,7 +20,7 @@ const config = {
         },
       },
       boxShadow: {
-        eldora: "0 24px 80px rgba(23, 32, 42, 0.14)",
+        eline: "0 24px 80px rgba(23, 32, 42, 0.14)",
         coral: "0 18px 38px rgba(217, 85, 69, 0.28)",
       },
     },
