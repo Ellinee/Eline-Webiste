@@ -1,18 +1,18 @@
 # Eline Frontend
 
-Situs publik Eline untuk informasi produk, kebijakan privasi, panduan penghapusan akun, dan unduhan APK Android terbaru.
+Eline's public website provides product information, privacy policies, account deletion instructions, and access to the latest Android APK release.
 
-- Situs: https://eline-id.com
+- Website: https://eline-id.com
 - Repository: https://github.com/Ellinee/Eline-Webiste
-- Rilis mobile: https://github.com/Ellinee/Eline-Mobile/releases/latest
+- Mobile releases: https://github.com/Ellinee/Eline-Mobile/releases/latest
 
 ## Tech Stack
 
-Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 3, Framer Motion, GSAP, dan Phosphor Icons.
+Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 3, Framer Motion, GSAP, and Phosphor Icons.
 
-## Pengembangan
+## Development
 
-Gunakan Node.js 22 dan npm.
+Use Node.js 22 and npm.
 
 ```bash
 npm ci
@@ -26,12 +26,12 @@ npm run build
 npm start
 ```
 
-`npm start` menjalankan `next start`, menerima `PORT` dari Railway (default `3000`), dan mendengarkan pada `0.0.0.0` tanpa konfigurasi tambahan.
+`npm start` runs `next start`, uses Railway's `PORT` (default: `3000`), and listens on `0.0.0.0` without additional configuration.
 
-## Pemeriksaan
+## Checks
 
 ```bash
 npm run check
 ```
 
-Menjalankan lint, typecheck, test, dan build. CI menjalankan `npm ci` lalu pemeriksaan yang sama pada Node.js 22 untuk push dan pull request.
+Runs lint, typecheck, tests, and build. CI runs `npm ci` followed by the same checks on Node.js 22 for pushes and pull requests.
