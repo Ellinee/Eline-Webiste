@@ -5,7 +5,7 @@ import { steps } from "./home-content";
 export function PreviewProcess() {
   return (
     <>
-      <section id="devices" className="bg-white py-16 md:py-20 xl:py-28">
+      <section id="devices" tabIndex={-1} className="bg-white py-16 md:py-20 xl:py-28">
         <div className="mx-auto w-[calc(100%-40px)] max-w-[1256px] md:w-[calc(100%-72px)] xl:w-[calc(100%-112px)]">
           <div className="mb-9 flex flex-col gap-5 md:mb-[52px] md:flex-row md:items-end md:justify-between md:gap-8" data-reveal>
             <div><p className="text-[11px] font-extrabold uppercase tracking-[.13em] text-[#28756C]">Meet the devices</p><h2 className="mt-4 text-[clamp(38px,4.5vw,62px)] font-extrabold leading-[1.1] tracking-[-.05em]">Care for the room.<br /><span className="text-[#287E74]">Care for the person.</span></h2></div>
@@ -17,7 +17,7 @@ export function PreviewProcess() {
           </div>
         </div>
       </section>
-      <section id="how-it-works" className="border-y border-eline-line bg-white py-16 md:py-20 xl:py-28">
+      <section id="how-it-works" tabIndex={-1} className="border-y border-eline-line bg-white py-16 md:py-20 xl:py-28">
         <div className="mx-auto w-[calc(100%-40px)] max-w-[1256px] md:w-[calc(100%-72px)] xl:w-[calc(100%-112px)]">
           <div className="mb-8 flex flex-col gap-5 md:mb-[52px] md:flex-row md:items-end md:justify-between md:gap-8" data-reveal><div><p className="text-[11px] font-extrabold uppercase tracking-[.13em] text-[#28756C]">Getting started</p><h2 className="mt-4 text-[clamp(38px,4.5vw,62px)] font-extrabold leading-[1.1] tracking-[-.05em]">Make yourself<br /><span className="text-[#287E74]">at home.</span></h2></div><p className="text-[15px] leading-[1.75] text-eline-muted lg:text-base">Connect your home.<br />Then bring your family along.</p></div>
           <div className="grid gap-8 md:gap-5 lg:grid-cols-3 xl:gap-[26px]">

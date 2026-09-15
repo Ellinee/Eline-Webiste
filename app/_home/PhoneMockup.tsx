@@ -10,7 +10,7 @@ export function PhoneMockup({ screen = "home", className = "[--phone-scale:.75]"
   const description = screen === "home"
     ? "Family Home dashboard: All Safe, 2 of 2 devices online, Home Wi-Fi connected, and household members."
     : screen === "devices"
-      ? "Devices tab: All, Radar and Vest filters, two online Radar cards, and the Add New Device tile."
+      ? "Devices tab: All, Radar and Vest filters, example Eline Radar and Eline Vest cards, and the Add New Device tile."
       : "Notifications with the Alert category selected and example possible-fall notifications.";
 
   return (
@@ -92,10 +92,10 @@ export function PhoneMockup({ screen = "home", className = "[--phone-scale:.75]"
                     <span className="flex min-h-[31.5px] items-center gap-[7px] rounded-[30px] border border-[#004b48] px-[10.5px] py-[5px] text-[13px] font-extrabold text-[#004b48]"><MobileIcon name="vest" size={16} />Vest</span>
                   </div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-[26px]">
-                    {[{ name: "Living Room Radar", room: "Living room" }, { name: "Bedroom Radar", room: "Bedroom" }].map((device) => (
+                    {[{ name: "Living Room Radar", room: "Living room", image: "/radar.webp", width: 98, height: 68 }, { name: "Eline Vest", room: "Bedroom", image: "/vest.webp", width: 62, height: 72 }].map((device) => (
                       <div className="flex min-h-[206px] flex-col items-center rounded-[16px] border border-[#dce2e2] bg-white px-[10.5px] py-3.5 shadow-[0_0_4px_rgb(0_55_52_/_22%)]" key={device.room}>
                         <span className="rounded-[5.25px] bg-[#a5d89b] px-1.5 text-[14px] font-semibold leading-[18px] text-[#246b18]">ONLINE</span>
-                        <div className="grid h-[84px] place-items-center"><Image src="/radar.webp" width={98} height={68} alt="" className="h-[68px] w-[98px] object-contain" /></div>
+                        <div className="grid h-[84px] place-items-center"><Image src={device.image} width={device.width} height={device.height} alt="" className="object-contain" /></div>
                         <strong className="text-center text-[16px] font-semibold leading-[19px] text-[#111]">{device.name}</strong>
                         <p className="mt-auto pt-[10.5px] text-center text-[14px] leading-[18px] text-[#7c7c7c]">{device.room}</p>
                       </div>

@@ -32,7 +32,7 @@ export const viewport: Viewport = { themeColor: "#F5FFFE", colorScheme: "light",
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${nunito.variable} scroll-pt-[148px] bg-eline-base md:scroll-pt-[110px] motion-reduce:scroll-auto`}>
+    <html lang="en" className={`${nunito.variable} scroll-pt-[92px] bg-eline-base md:scroll-pt-[110px] motion-reduce:scroll-auto`}>
       <body className="m-0 font-sans text-eline-text antialiased selection:bg-eline-accent selection:text-eline-deep [&_:focus-visible]:outline [&_:focus-visible]:outline-[3px] [&_:focus-visible]:outline-offset-[5px] [&_:focus-visible]:outline-eline-deep motion-reduce:[&_*]:animate-none motion-reduce:[&_*]:transition-none"><SiteChrome>{children}</SiteChrome></body>
     </html>
   );

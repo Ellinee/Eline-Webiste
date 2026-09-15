@@ -2,7 +2,6 @@
 
 import { ArrowRight } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
-import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { features } from "./home-content";
 import { PhoneMockup, type PreviewScreen } from "./PhoneMockup";
@@ -31,7 +30,7 @@ export function Features() {
   const feature = features[active];
 
   return (
-    <section id="features" className="bg-white py-16 md:py-20 xl:py-28">
+    <section id="features" tabIndex={-1} className="bg-white py-16 md:py-20 xl:py-28">
       <div className="mx-auto w-[calc(100%-40px)] max-w-[1256px] md:w-[calc(100%-72px)] xl:w-[calc(100%-112px)]">
         <div className="mb-8 flex flex-col gap-5 md:mb-[52px] md:flex-row md:items-end md:justify-between md:gap-8" data-reveal>
           <div><p className="text-[11px] font-extrabold uppercase tracking-[.13em] text-[#28756C]">One app. A closer connection.</p><h2 className="mt-4 text-[clamp(38px,4.5vw,62px)] font-extrabold leading-[1.1] tracking-[-.05em]">Less wondering.<br /><span className="text-[#287E74]">More knowing.</span></h2></div>
@@ -46,13 +45,11 @@ export function Features() {
               <p className="mb-[25px] hidden text-xs tracking-[.1em] text-[#477971] md:block">{feature.number} / 03</p>
               <h3 className="max-w-[340px] text-[31px] font-extrabold leading-[1.18] tracking-[-.045em] [text-wrap:balance] md:max-w-none md:text-[34px] lg:text-[37px] xl:text-[46px]">{feature.title}</h3>
               <p className="mt-3.5 text-sm leading-[1.85] text-eline-muted md:mt-[22px] md:text-[15px] lg:text-base">{feature.text}</p>
-              <Link href="/privacy" className="mt-3 inline-flex min-h-11 items-center gap-2.5 text-[13px] font-extrabold underline-offset-4 hover:underline md:mt-[25px] md:text-sm">Your data, explained <ArrowRight size={17} aria-hidden="true" /></Link>
             </div>
             <figure className="relative isolate flex min-w-0 flex-col items-center gap-[18px] border-0 bg-transparent p-0 shadow-none md:gap-[22px]">
               <div data-gradient-orb aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_closest-side,#74D3CEB3_0%,#74D3CE80_55%,#D1F4F2B3_78%,#D1F4F200_100%)]" />
               <p className="text-[11px] font-semibold text-eline-muted md:text-xs">{feature.label}</p>
               <div className="grid [perspective:1200px]"><AnimatePresence key={String(reducedMotion)} initial={false} mode="sync"><PreviewLayer key={feature.id} screen={feature.id} reducedMotion={reducedMotion} /></AnimatePresence></div>
-              <figcaption className="text-center text-[9px] text-eline-muted md:text-[10px]">Recreated from the Eline app · example data</figcaption>
             </figure>
           </div>
         </div>
