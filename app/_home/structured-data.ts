@@ -2,14 +2,8 @@ export const structuredData = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "Eline",
-  applicationCategory: "HealthApplication",
-  operatingSystem: "Android, iOS",
-  description:
-    "Eline helps families monitor elderly care through safety alerts, DoraBot device status, wellness summaries, and caregiver updates.",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-  },
-  downloadUrl: "https://eline-id.com/download",
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Android",
+  description: "An Android app for home safety status, Eline Radar connectivity, fall alerts, and shared family care.",
+  url: "https://eline-id.com",
 };

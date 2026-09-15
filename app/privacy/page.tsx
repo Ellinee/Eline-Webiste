@@ -1,88 +1,228 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getSiteConfig } from "../site-config.mjs";
+
+const description =
+  "How Eline handles account, household, device, and alert information, including your choices and what remains after account deletion.";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Eline privacy policy for Google Play and app users.",
+  description,
   alternates: { canonical: "/privacy" },
+  openGraph: {
+    type: "website",
+    url: "/privacy",
+    title: "Privacy Policy | Eline",
+    description,
+    images: ["/eline-icon.png"],
+  },
+  twitter: {
+    card: "summary",
+    title: "Privacy Policy | Eline",
+    description,
+    images: ["/eline-icon.png"],
+  },
 };
 
-const dataItems = [
-  ["Account information", "Name, email address, mobile number, account ID, role, and authentication tokens used to create and secure your Eline account."],
-  ["Device and safety information", "DoraBot and DoraShield status, device ID, battery level, charging state, firmware version, Wi-Fi SSID/RSSI, local IP during pairing, fall alerts, SOS alerts, offline alerts, and low-battery alerts."],
-  ["Home and caregiver information", "Home name, room/category setup, invited members, caregiver role, emergency contact name and phone number, optional home address, and optional map coordinates selected by the user."],
-  ["Notifications", "FCM push token, notification preferences, notification read status, alert responses, and message metadata needed to deliver safety and device updates."],
-  ["Wellness summaries", "Care signals, interaction summaries, distress level, risk score, and recommendations generated from Eline device events and family updates."],
-];
-
 export default function PrivacyPage() {
+  const { supportEmail } = getSiteConfig();
+
   return (
-    <main className="min-h-screen bg-[#FDF8F5] px-5 py-10 text-eline-text sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-4xl">
-        <Link href="/" className="text-sm font-bold text-eline-coral">Back to Eline</Link>
-        <section className="mt-8 rounded-[2rem] bg-white p-6 shadow-[0_20px_70px_rgba(23,32,42,0.08)] sm:p-10">
-          <p className="text-sm font-black uppercase tracking-[0.16em] text-eline-coral">Privacy Policy</p>
-          <h1 className="mt-4 text-[clamp(2.5rem,7vw,5.5rem)] font-black leading-[0.9] tracking-[-0.08em]">Eline Privacy Policy</h1>
-          <p className="mt-6 text-sm font-semibold text-eline-muted">Last updated: June 9, 2026</p>
-          <p className="mt-6 text-base font-semibold leading-8 text-eline-muted">
-            Eline helps families monitor elderly care through DoraBot, DoraShield, safety alerts, wellness summaries, and caregiver updates. This policy explains what data we collect, why we collect it, and how users can control or delete their data.
-          </p>
-        </section>
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="mx-auto w-[calc(100%-40px)] max-w-[1256px] pb-[35px] pt-12 text-eline-text md:w-[calc(100%-72px)] md:pb-[100px] md:pt-[78px] xl:w-[calc(100%-112px)]"
+    >
+      <header className="max-w-[820px] pb-8 md:pb-[50px]">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.13em] text-eline-deep">Privacy</p>
+        <h1 className="mt-5 text-[clamp(38px,10vw,48px)] font-extrabold leading-[1.08] tracking-[-0.055em] md:text-[clamp(44px,6vw,76px)]">Privacy policy</h1>
+        <p className="mt-6 max-w-[680px] text-base leading-[1.75] text-eline-muted md:text-lg md:leading-[1.75]">
+          How Eline handles information when you use the Android app to manage
+          your home, connect Eline Radar devices, and receive care alerts.
+        </p>
+        <p className="mt-[18px] text-xs text-eline-muted">Last updated: September 14, 2026</p>
+      </header>
 
-        <section className="mt-6 grid gap-4">
-          <article className="rounded-[1.5rem] bg-white p-6 shadow-[0_14px_50px_rgba(23,32,42,0.06)]">
-            <h2 className="text-2xl font-black tracking-[-0.04em]">Information we collect</h2>
-            <div className="mt-5 grid gap-4">
-              {dataItems.map(([title, text]) => (
-                <div key={title} className="rounded-2xl bg-eline-warm p-4">
-                  <h3 className="font-black text-eline-text">{title}</h3>
-                  <p className="mt-2 text-sm font-semibold leading-7 text-eline-muted">{text}</p>
-                </div>
-              ))}
-            </div>
-          </article>
+      <div className="grid grid-cols-1 gap-8 border-t border-eline-line pt-6 md:grid-cols-[170px_minmax(0,1fr)] md:gap-9 md:pt-11 lg:grid-cols-[230px_minmax(0,720px)] lg:gap-[70px]">
+        <aside className="self-start md:sticky md:top-[125px]">
+          <nav aria-label="On this page" className="flex flex-wrap items-start gap-x-[22px] md:flex-col md:flex-nowrap md:gap-0 [&_a]:inline-flex [&_a]:min-h-11 [&_a]:items-center [&_a]:py-2.5 [&_a]:text-xs [&_a]:font-semibold [&_a:hover]:text-eline-deep [&_a:hover]:underline md:[&_a]:text-[13px]">
+            <a href="#information">Information we process</a>
+            <a href="#uses">How information is used</a>
+            <a href="#sharing">Sharing and services</a>
+            <a href="#choices">Your choices</a>
+            <a href="#retention">Retention and deletion</a>
+            <a href="#contact">Privacy contact</a>
+          </nav>
+        </aside>
 
-          <article className="rounded-[1.5rem] bg-white p-6 shadow-[0_14px_50px_rgba(23,32,42,0.06)]">
-            <h2 className="text-2xl font-black tracking-[-0.04em]">How we use information</h2>
-            <ul className="mt-4 list-disc space-y-3 pl-5 text-sm font-semibold leading-7 text-eline-muted">
-              <li>Authenticate users and manage caregiver or family access.</li>
-              <li>Pair, configure, and monitor DoraBot and DoraShield devices.</li>
-              <li>Deliver safety, SOS, fall, device offline, low battery, and home alerts.</li>
-              <li>Show home, room, emergency contact, and caregiver management features.</li>
-              <li>Generate wellness summaries and care recommendations for caregivers.</li>
-              <li>Improve app reliability, security, and user support.</li>
+        <div className="min-w-0 text-eline-muted [&_section]:mb-10 [&_section]:scroll-mt-2.5 [&_h2]:mb-[15px] [&_h2]:text-[25px] [&_h2]:font-extrabold [&_h2]:leading-[1.3] [&_h2]:tracking-[-0.03em] [&_h2]:text-eline-text md:[&_h2]:text-[27px] [&_p]:text-sm [&_p]:leading-[1.85] md:[&_p]:text-[15px] [&_p+p]:mt-3.5 [&_ul]:my-[15px] [&_ul]:list-outside [&_ul]:list-disc [&_ul]:pl-[23px] [&_li]:text-sm [&_li]:leading-[1.85] md:[&_li]:text-[15px] [&_li+li]:mt-2.5 [&_strong]:font-extrabold [&_strong]:text-eline-text">
+          <section id="information">
+            <h2>Information we process</h2>
+            <p>
+              The information processed depends on the features you use, what you
+              and other household members provide, and what connected devices send.
+            </p>
+            <ul>
+              <li>
+                <strong>Account information.</strong> Your name, email address,
+                account and authentication identifiers, role, and profile photo
+                if supplied. Sign-in and password reset flows also process
+                authentication tokens and reset verification information.
+              </li>
+              <li>
+                <strong>Household information.</strong> Home and room names,
+                memberships and roles, invitations and recipient email addresses,
+                elder profiles, and optional addresses, location labels, and
+                coordinates.
+              </li>
+              <li>
+                <strong>Connected devices.</strong> Eline Radar identifiers, pairing
+                and provisioning information, telemetry, online status, battery and
+                charging status, firmware version, and Wi-Fi details such as network
+                name, signal strength, and local IP address. Wi-Fi setup credentials,
+                including passwords, are processed and stored in backend device
+                commands if supplied for configuration. These categories also apply
+                to Vest device records where present; Eline Vest integration in the
+                app is still pending.
+              </li>
+              <li>
+                <strong>Alerts and notifications.</strong> Device, motion, and
+                alert events, timestamps, confidence values, optional event
+                coordinates, notification content, read status, responses and
+                notes, notification preferences, and push notification tokens.
+              </li>
+              <li>
+                <strong>Optional spoken reminders.</strong> When enabled, reminder
+                titles, messages, schedules, and language and voice settings are
+                processed to prepare and deliver text-to-speech reminders.
+              </li>
+              <li>
+                <strong>Operational logs.</strong> Logs can include IP addresses,
+                request paths, timestamps, response status, processing time, and
+                limited request and response contents, which can include personal
+                information.
+              </li>
             </ul>
-          </article>
+          </section>
 
-          <article className="rounded-[1.5rem] bg-white p-6 shadow-[0_14px_50px_rgba(23,32,42,0.06)]">
-            <h2 className="text-2xl font-black tracking-[-0.04em]">Sharing and third parties</h2>
-            <p className="mt-4 text-sm font-semibold leading-7 text-eline-muted">
-              Eline does not sell personal data. We use service providers needed to run the app, including backend hosting, Firebase authentication, Firebase Cloud Messaging, Google Sign-In, and maps. Data may be shared with invited caregivers or family members inside the same Eline home according to app permissions.
-            </p>
-          </article>
+          <section id="uses">
+            <h2>How information is used</h2>
+            <ul>
+              <li>Sign you in, maintain account access, and support password resets.</li>
+              <li>Manage households, rooms, invitations, and member permissions.</li>
+              <li>Pair and configure devices, display their status, and send commands.</li>
+              <li>Deliver alerts and notifications and record responses and notes.</li>
+              <li>Schedule and deliver spoken reminders when enabled.</li>
+              <li>Investigate errors, troubleshoot connections, and respond to support requests.</li>
+            </ul>
+          </section>
 
-          <article className="rounded-[1.5rem] bg-white p-6 shadow-[0_14px_50px_rgba(23,32,42,0.06)]">
-            <h2 className="text-2xl font-black tracking-[-0.04em]">Security, retention, and deletion</h2>
-            <p className="mt-4 text-sm font-semibold leading-7 text-eline-muted">
-              We use authentication, access controls, and transport security to protect data. Data is retained while an account is active or as needed to provide safety, device, and caregiver features. Users can delete their account in the Eline app from Account and Security, or follow the instructions on the account deletion page.
+          <section id="sharing">
+            <h2>Sharing and services</h2>
+            <p>
+              Household members can access information made available to their
+              role, including shared home, room, device, and alert information.
+              Names, email addresses, and notes may also appear in invitations
+              and shared records.
             </p>
-            <Link href="/account-deletion" className="mt-4 inline-flex rounded-full bg-eline-coral px-5 py-3 text-sm font-black text-white">Account deletion instructions</Link>
-          </article>
+            <ul>
+              <li>
+                <strong>Firebase Authentication and Google sign-in</strong> process
+                sign-in information. Google sign-in provides account identifiers,
+                name, email address, and a profile photo when available.
+              </li>
+              <li>
+                <strong>Firebase Cloud Messaging</strong> processes push tokens
+                and notification payloads to deliver app notifications.
+              </li>
+              <li>
+                <strong>Hosting and database providers</strong> process application
+                records and operational logs to run Eline.
+              </li>
+              <li>
+                <strong>S3-compatible storage</strong> stores uploaded profile
+                photos. <strong>SMTP email providers</strong> process recipient
+                email addresses and message content for account emails, including
+                password reset messages. The providers depend on the deployment.
+              </li>
+              <li>
+                <strong>Text-to-speech services</strong> process reminder text and
+                voice settings when spoken reminders are enabled.
+              </li>
+            </ul>
+          </section>
 
-          <article className="rounded-[1.5rem] bg-white p-6 shadow-[0_14px_50px_rgba(23,32,42,0.06)]">
-            <h2 className="text-2xl font-black tracking-[-0.04em]">Children</h2>
-            <p className="mt-4 text-sm font-semibold leading-7 text-eline-muted">
-              Eline is intended for caregivers and family members and is not directed to children under 13. If you believe a child has provided personal information, contact the Eline team so it can be removed.
+          <section id="choices">
+            <h2>Your choices</h2>
+            <p>
+              Use the app to update account and household details that you have
+              permission to manage. Review notification preferences in Eline and
+              notification permissions in your phone settings. Only provide
+              optional household locations or reminder content when needed.
             </p>
-          </article>
+            <p>
+              For questions about accessing, correcting, or removing information,
+              use the <a className="inline-flex min-h-11 max-w-full items-center gap-2.5 text-sm font-extrabold underline-offset-[5px] hover:underline" href="#contact">privacy contact</a>
+              {" "}below. Account removal is available in the app; the steps and
+              limits are explained on the account deletion page.
+            </p>
+          </section>
 
-          <article className="rounded-[1.5rem] bg-white p-6 shadow-[0_14px_50px_rgba(23,32,42,0.06)]">
-            <h2 className="text-2xl font-black tracking-[-0.04em]">Contact</h2>
-            <p className="mt-4 text-sm font-semibold leading-7 text-eline-muted">
-              For privacy questions, data access, or deletion support, contact the Eline team through the support channel used to distribute the app or through the account owner managing the Eline deployment.
+          <section id="retention">
+            <h2>Retention and deletion</h2>
+            <p>
+              Successful account deletion removes the Eline user record and its
+              directly linked household memberships, notification settings, push
+              tokens, password reset records, pairing requests, and provisioning
+              sessions. Directly linked invitations and notifications, including
+              their read states and responses, are also removed.
             </p>
-          </article>
-        </section>
+            <p>
+              Home, room, device, elder-profile, and reminder records remain, as do
+              device commands and their payloads. Wi-Fi setup credentials supplied
+              in retained commands can remain. Other shared notifications and
+              records can retain copied names, email addresses, photo links,
+              identifiers, and response notes.
+            </p>
+            <p>
+              Eline attempts to remove the linked Firebase Authentication account
+              and the current uploaded profile photo. These cleanup operations can
+              fail or be skipped, so their removal is not guaranteed.
+            </p>
+            <p>
+              Account deletion does not erase operational logs or every copy in
+              shared records. No fixed retention or removal period is currently
+              specified for retained records. Account deletion is permanent, but
+              it is not a promise that all data is erased. Uninstalling Eline or
+              clearing its cache does not delete your account.
+            </p>
+            <Link className="mt-5 inline-flex min-h-11 max-w-full items-center justify-center gap-[22px] rounded-full bg-eline-deep px-[25px] py-4 text-center text-sm font-extrabold leading-[1.4] text-white transition-[background-color,transform] duration-200 hover:bg-eline-deep/90 motion-safe:hover:-translate-y-0.5 motion-reduce:transition-none" href="/account-deletion">
+              Account deletion instructions
+            </Link>
+          </section>
+
+          <section id="contact" className="rounded-2xl bg-eline-mint p-[22px] text-eline-text md:px-[26px] md:py-6 [&_a]:[overflow-wrap:anywhere]">
+            <h2>Privacy contact</h2>
+            {supportEmail ? (
+              <>
+                <p>
+                  For privacy questions or requests about your information, email
+                  {" "}
+                  <a className="inline-flex min-h-11 max-w-full items-center gap-2.5 text-sm font-extrabold underline-offset-[5px] hover:underline" href={`mailto:${encodeURIComponent(supportEmail)}`}>
+                    {supportEmail}
+                  </a>.
+                </p>
+                <p>
+                  Include the email address associated with your Eline account
+                  and describe your request. Never send your password or a
+                  verification or reset code.
+                </p>
+              </>
+            ) : (
+              <p>A public email contact will be published here before the Android release.</p>
+            )}
+          </section>
+        </div>
       </div>
     </main>
   );

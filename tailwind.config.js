@@ -1,28 +1,20 @@
 const config = {
-  content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
+  content: ["./app/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
       colors: {
         eline: {
-          text: "#17202A",
-          muted: "#5F6B7A",
-          line: "#E7E1DA",
-          base: "#FDF8F5",
-          bg: "#FAF7F2",
-          warm: "#F6F1EC",
-          coral: "#D95545",
-          soft: "#FFE7E2",
-          peach: "#FFD4C2",
-          mint: "#A8D8C2",
+          base: "#F5FFFE",
+          mint: "#D1F4F2",
+          accent: "#74D3CE",
+          teal: "#2A9D8F",
+          text: "#264653",
+          deep: "#004B48",
+          muted: "#526F76",
+          line: "#D5E8E5",
         },
       },
-      boxShadow: {
-        eline: "0 24px 80px rgba(23, 32, 42, 0.14)",
-        coral: "0 18px 38px rgba(217, 85, 69, 0.28)",
-      },
+      fontFamily: { sans: ["var(--font-nunito)", "sans-serif"] },
     },
   },
   plugins: [],

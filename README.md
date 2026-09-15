@@ -34,4 +34,4 @@ npm start
 npm run check
 ```
 
-Runs lint, typecheck, tests, and build. CI runs `npm ci` followed by the same checks on Node.js 22 for pushes and pull requests.
+Runs lint, typecheck, and build. CI runs `npm ci` followed by the same checks on Node.js 22 for pushes and pull requests.

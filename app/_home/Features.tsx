@@ -1,79 +1,62 @@
-import { motion } from "framer-motion";
-import Image from "next/image";
-import { features, pillars } from "./home-content";
-import { fadeUp } from "./home-motion";
-import { MiniIcon } from "./MiniIcon";
+"use client";
+
+import { ArrowRight } from "@phosphor-icons/react";
+import { AnimatePresence, motion, useIsPresent } from "framer-motion";
+import Link from "next/link";
+import { useState, useSyncExternalStore } from "react";
+import { features } from "./home-content";
+import { PhoneMockup, type PreviewScreen } from "./PhoneMockup";
+
+const motionPreference = "(prefers-reduced-motion: reduce)";
+
+function subscribeMotionPreference(onChange: () => void) {
+  const query = window.matchMedia(motionPreference);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function PreviewLayer({ screen, reducedMotion }: { screen: PreviewScreen; reducedMotion: boolean }) {
+  const present = useIsPresent();
+
+  return (
+    <motion.div className={`col-start-1 row-start-1 ${present ? "z-10" : "pointer-events-none z-0"}`} aria-hidden={!present} initial={{ opacity: 0, x: reducedMotion ? 0 : 18, y: reducedMotion ? 0 : 10, rotate: reducedMotion ? 0 : 2, scale: reducedMotion ? 1 : 0.96 }} animate={{ opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 }} exit={{ opacity: 0, x: reducedMotion ? 0 : -18, y: reducedMotion ? 0 : -8, rotate: reducedMotion ? 0 : -2, scale: reducedMotion ? 1 : 0.98 }} transition={{ duration: reducedMotion ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}>
+      <PhoneMockup screen={screen} className="[--phone-scale:.64] md:[--phone-scale:.66] lg:[--phone-scale:.72]" />
+    </motion.div>
+  );
+}
 
 export function Features() {
+  const [active, setActive] = useState(0);
+  const reducedMotion = useSyncExternalStore(subscribeMotionPreference, () => window.matchMedia(motionPreference).matches, () => true);
+  const feature = features[active];
+
   return (
-    <>
-      <section id="features" className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <motion.div className="mb-12 grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end" initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.6 }} variants={fadeUp}>
-            <p className="text-[13px] font-black uppercase tracking-[0.18em] text-eline-coral">Core operating system</p>
-            <h2 className="max-w-4xl text-[clamp(2.5rem,6vw,5.8rem)] font-black leading-[0.9] tracking-[-0.085em] text-eline-text">
-              DoraBot and DoraShield keep the home calm.
-            </h2>
-          </motion.div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {pillars.map((pillar, index) => (
-              <motion.article key={pillar.title} className="relative min-h-[390px] overflow-hidden rounded-[2rem] border border-eline-line bg-white p-7 shadow-[0_20px_70px_rgba(23,32,42,0.08)] transition hover:-translate-y-1" initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.55, delay: index * 0.08 }} variants={fadeUp}>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-eline-soft text-eline-coral shadow-inner">
-                    <MiniIcon type={(["shield", "device", "care"] as const)[index]} />
-                  </span>
-                  <span className="rounded-full bg-eline-soft px-4 py-2 text-[12px] font-black uppercase tracking-[0.16em] text-eline-coral">{pillar.eyebrow}</span>
-                </div>
-                <h3 className="mt-8 text-[2rem] font-black leading-none tracking-[-0.07em] text-eline-text">{pillar.title}</h3>
-                <p className="mt-4 text-[15px] font-semibold leading-7 text-eline-muted">{pillar.text}</p>
-              </motion.article>
-            ))}
-          </div>
+    <section id="features" className="bg-white py-16 md:py-20 xl:py-28">
+      <div className="mx-auto w-[calc(100%-40px)] max-w-[1256px] md:w-[calc(100%-72px)] xl:w-[calc(100%-112px)]">
+        <div className="mb-8 flex flex-col gap-5 md:mb-[52px] md:flex-row md:items-end md:justify-between md:gap-8" data-reveal>
+          <div><p className="text-[11px] font-extrabold uppercase tracking-[.13em] text-[#28756C]">One app. A closer connection.</p><h2 className="mt-4 text-[clamp(38px,4.5vw,62px)] font-extrabold leading-[1.1] tracking-[-.05em]">Less wondering.<br /><span className="text-[#287E74]">More knowing.</span></h2></div>
+          <p className="max-w-[410px] text-[15px] leading-[1.75] text-eline-muted md:max-w-[270px] md:pb-1 lg:max-w-[410px] lg:text-base">Home status, safety alerts, and connected devices.<br className="hidden lg:block" /> Everything in its right place.</p>
         </div>
-      </section>
-
-      <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <motion.article className="relative overflow-hidden p-7 md:p-10" initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.62 }} variants={fadeUp}>
-            <div className="relative z-10 max-w-3xl">
-              <p className="mb-4 text-[13px] font-black uppercase tracking-[0.16em] text-eline-coral">Family-grade clarity</p>
-              <h2 className="max-w-2xl text-[clamp(2.2rem,5vw,5rem)] font-black leading-[0.92] tracking-[-0.08em] text-eline-text">A dashboard that feels calm even when the moment is urgent.</h2>
-              <p className="mt-5 max-w-xl text-[16px] font-semibold leading-8 text-eline-muted">
-                Coral highlights DoraShield urgency, warm surfaces reduce anxiety, and every DoraBot or DoraShield status stays easy to understand.
-              </p>
+        <div data-reveal>
+          <div className="grid grid-cols-3 border-y border-eline-line" role="group" aria-label="Choose an app preview">
+            {features.map((item, index) => <button key={item.id} type="button" className={`relative flex min-h-[55px] items-center justify-center gap-2 px-2 py-3.5 text-[13px] transition-colors hover:bg-eline-base [&+button]:border-l [&+button]:border-eline-line md:min-h-[70px] md:justify-start md:gap-3.5 md:px-5 md:py-5 md:text-[15px] xl:px-7 ${active === index ? "font-extrabold text-eline-deep after:absolute after:inset-x-0 after:-bottom-px after:h-[3px] after:bg-eline-teal" : "font-semibold text-eline-muted"}`} aria-pressed={active === index} aria-controls="feature-preview" onClick={() => setActive(index)}><span className="text-[9px] opacity-80 md:text-[11px]" aria-hidden="true">{item.number}</span>{item.tab}<ArrowRight className="ml-auto hidden md:block" size={16} aria-hidden="true" /></button>)}
+          </div>
+          <div className="grid items-center gap-8 pt-7 md:grid-cols-2 md:gap-6 md:pt-[42px] lg:gap-11 xl:gap-[70px]" id="feature-preview">
+            <div className="min-h-[226px] md:min-h-0 md:max-w-[410px]" aria-live="polite" aria-atomic="true">
+              <p className="mb-[25px] hidden text-xs tracking-[.1em] text-[#477971] md:block">{feature.number} / 03</p>
+              <h3 className="max-w-[340px] text-[31px] font-extrabold leading-[1.18] tracking-[-.045em] [text-wrap:balance] md:max-w-none md:text-[34px] lg:text-[37px] xl:text-[46px]">{feature.title}</h3>
+              <p className="mt-3.5 text-sm leading-[1.85] text-eline-muted md:mt-[22px] md:text-[15px] lg:text-base">{feature.text}</p>
+              <Link href="/privacy" className="mt-3 inline-flex min-h-11 items-center gap-2.5 text-[13px] font-extrabold underline-offset-4 hover:underline md:mt-[25px] md:text-sm">Your data, explained <ArrowRight size={17} aria-hidden="true" /></Link>
             </div>
-          </motion.article>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            {[
-              ["DoraShield priority", "Fall and safety moments are treated as first-class signals, not buried notifications."],
-              ["DoraBot follow-ups", "Build check-ins, voice prompts, and family follow-ups around DoraBot routines."],
-            ].map(([title, text], index) => (
-              <motion.article key={title} className={`${index === 0 ? "bg-eline-soft text-eline-text" : "bg-white text-eline-text"} rounded-[2rem] border border-eline-line p-7 shadow-[0_22px_70px_rgba(23,32,42,0.08)]`} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.55, delay: index * 0.08 }} variants={fadeUp}>
-                <h3 className="text-[2rem] font-black leading-none tracking-[-0.07em]">{title}</h3>
-                <p className="mt-4 text-[15px] font-semibold leading-7 text-eline-muted">{text}</p>
-              </motion.article>
-            ))}
+            <figure className="relative isolate flex min-w-0 flex-col items-center gap-[18px] border-0 bg-transparent p-0 shadow-none md:gap-[22px]">
+              <div data-gradient-orb aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_closest-side,#74D3CEB3_0%,#74D3CE80_55%,#D1F4F2B3_78%,#D1F4F200_100%)]" />
+              <p className="text-[11px] font-semibold text-eline-muted md:text-xs">{feature.label}</p>
+              <div className="grid [perspective:1200px]"><AnimatePresence key={String(reducedMotion)} initial={false} mode="sync"><PreviewLayer key={feature.id} screen={feature.id} reducedMotion={reducedMotion} /></AnimatePresence></div>
+              <figcaption className="text-center text-[9px] text-eline-muted md:text-[10px]">Recreated from the Eline app · example data</figcaption>
+            </figure>
           </div>
         </div>
-      </section>
-
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-3">
-          {features.map((feature, index) => (
-            <motion.article key={feature.title} className="group overflow-hidden rounded-[2rem] border border-eline-line bg-white p-4 shadow-[0_20px_70px_rgba(23,32,42,0.08)]" initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.55, delay: index * 0.08 }} variants={fadeUp}>
-              <div className="grid min-h-[260px] place-items-center rounded-[1.5rem] bg-gradient-to-br from-eline-warm to-eline-soft transition group-hover:scale-[0.98]">
-                <Image src={feature.image} alt="" width={270} height={230} className="max-w-full transition duration-500 group-hover:scale-105" />
-              </div>
-              <div className="p-4">
-                <h3 className="text-[1.85rem] font-black leading-[0.98] tracking-[-0.07em] text-eline-text">{feature.title}</h3>
-                <p className="mt-4 text-[15px] font-semibold leading-7 text-eline-muted">{feature.text}</p>
-              </div>
-            </motion.article>
-          ))}
-        </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
