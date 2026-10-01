@@ -1,7 +1,9 @@
 node_modules
+.debug-dist
 .next
 out
-.env*.local
+.env*
+!.env.example
 .DS_Store
 *.tsbuildinfo
 npm-debug.log*
