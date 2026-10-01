@@ -54,14 +54,17 @@ export async function handleDebugRequest(request: Request, parts: string[], conf
   if (request.method !== routes[route]) return errorResponse(405);
   let upstream: URL;
   let current: URL;
+  let allowed: URL;
   try {
     upstream = new URL(config.apiUrl ?? "");
     current = new URL(request.url);
-    const allowed = new URL(config.allowedOrigin ?? "");
-    if (allowed.origin !== config.allowedOrigin || current.origin !== allowed.origin || upstream.username || upstream.password || upstream.search || upstream.hash || !["", "/", "/debug", "/debug/"].includes(upstream.pathname) || !["http:", "https:"].includes(upstream.protocol) || (config.production && (upstream.protocol !== "https:" || allowed.protocol !== "https:"))) return errorResponse(503);
+    allowed = new URL(config.allowedOrigin ?? "");
+    if (allowed.origin !== config.allowedOrigin || upstream.username || upstream.password || upstream.search || upstream.hash || !["", "/", "/debug", "/debug/"].includes(upstream.pathname) || !["http:", "https:"].includes(upstream.protocol) || !["http:", "https:"].includes(allowed.protocol) || (config.production && (upstream.protocol !== "https:" || allowed.protocol !== "https:"))) return errorResponse(503);
   } catch { return errorResponse(503); }
+  const host = request.headers.get("host");
+  if (host !== null ? host !== allowed.host : current.origin !== allowed.origin) return errorResponse(403);
   const origin = request.headers.get("origin");
-  if ((origin !== null && origin !== current.origin) || (request.method === "POST" && origin !== current.origin)) return errorResponse(403);
+  if ((origin !== null && origin !== allowed.origin) || (request.method === "POST" && origin !== allowed.origin)) return errorResponse(403);
   const site = request.headers.get("sec-fetch-site");
   if (site && !["same-origin", "none"].includes(site)) return errorResponse(403);
   const headers = new Headers();

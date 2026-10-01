@@ -83,6 +83,56 @@ test("proxy rejects unknown routes, methods, query keys and origins before fetch
   assert.equal(calls, 0);
 });
 
+test("proxy accepts the configured public host behind an internal Next origin", async () => {
+  for (const internal of ["http://localhost:8080", "https://0.0.0.0:8080"]) {
+    for (const route of ["session", "login", "logout"]) {
+      let calls = 0;
+      const post = route !== "session";
+      const response = await invoke(new Request(`${internal}/debug/api/${route}`, {
+        method: post ? "POST" : "GET",
+        headers: { Host: new URL(origin).host, "Sec-Fetch-Site": "same-origin", ...(post ? { Origin: origin, "Content-Type": "application/json" } : {}) },
+        ...(post ? { body: route === "login" ? '{"password":"test"}' : "{}" } : {}),
+      }), [route], async (url, init) => {
+        calls++;
+        assert.equal(String(url), `https://backend.test/debug/${route}`);
+        assert.equal(new Headers(init?.headers).get("origin"), post ? origin : null);
+        return Response.json(route === "session" ? { authenticated: false } : session, { headers: route === "login" ? { "Set-Cookie": "eline_debug_session=abc123; Path=/debug; HttpOnly; Secure; SameSite=Strict" } : {} });
+      });
+      assert.equal(response.status, 200);
+      assert.equal(calls, 1);
+    }
+  }
+});
+
+test("proxy never trusts forwarded headers to authorize an unknown host", async () => {
+  const fetcher: typeof fetch = async () => { assert.fail("Unexpected fetch"); };
+  for (const host of [undefined, "evil.test", "localhost:8080", "diagnostics.test.evil.test", "diagnostics.test, evil.test", "diagnostics.test:8080", "diagnostics.test@evil.test"]) {
+    const headers = { ...(host ? { Host: host } : {}), Origin: origin, "X-Forwarded-Host": new URL(origin).host, "X-Forwarded-Proto": "https", Forwarded: `host=${new URL(origin).host};proto=https` };
+    const response = await invoke(new Request("http://localhost:8080/debug/api/session", { headers }), ["session"], fetcher);
+    assert.equal(response.status, 403);
+  }
+  assert.equal((await invoke(request("session", { headers: { Host: "evil.test" } }), ["session"], fetcher)).status, 403);
+});
+
+test("proxy checks the canonical browser Origin before processing proxied login", async () => {
+  const fetcher: typeof fetch = async () => { assert.fail("Unexpected fetch"); };
+  for (const supplied of [undefined, "null", "http://localhost:8080", "http://diagnostics.test", "https://evil.test"]) {
+    const response = await invoke(new Request("http://localhost:8080/debug/api/login", {
+      method: "POST", headers: { Host: new URL(origin).host, ...(supplied ? { Origin: supplied } : {}), "Content-Type": "application/json", "X-Forwarded-Host": "evil.test" }, body: "{}",
+    }), ["login"], fetcher);
+    assert.equal(response.status, 403);
+  }
+});
+
+test("proxy ignores spoofed forwarding headers on a canonical request", async () => {
+  const response = await invoke(new Request("http://localhost:8080/debug/api/session", { headers: { Host: new URL(origin).host, "X-Forwarded-Host": "evil.test", "X-Forwarded-Proto": "http" } }), ["session"], async (_url, init) => {
+    const headers = new Headers(init?.headers);
+    for (const name of ["host", "origin", "x-forwarded-host", "x-forwarded-proto"]) assert.equal(headers.get(name), null);
+    return Response.json({ authenticated: false });
+  });
+  assert.equal(response.status, 200);
+});
+
 test("proxy forwards only the session cookie and actual browser origin", async () => {
   const response = await invoke(request("session", { headers: { Cookie: "analytics=private; eline_debug_session=abc123; auth=secret", Origin: origin, Authorization: "Bearer secret", "X-Forwarded-Host": "evil.test", "X-Forwarded-For": "192.0.2.1", "X-Real-IP": "192.0.2.2", Forwarded: "for=192.0.2.3" } }), ["session"], async (url, init) => {
     assert.equal(String(url), "https://backend.test/debug/session");
