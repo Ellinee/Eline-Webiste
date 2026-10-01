@@ -26,6 +26,70 @@ test("contract only exposes bounded allowlisted summaries", () => {
   assert.equal(normalizeEvent({ ...event, output: { probability: Infinity } })?.output?.probability, undefined);
 });
 
+test("radar logs retain bounded frame readings, every target and zero values through repeated normalization", () => {
+  const frames = Array.from({ length: 20 }, (_, t) => ({ t, secret: "discard", targets: Array.from({ length: 4 }, (_, slot) => ({ slot, valid: slot !== 2, x: -t, y: slot, speed: 0, token: "discard" })) }));
+  const value = normalizeEvent({ ...event, input: { totalCount: 20, frames } });
+  assert.equal(value?.frames?.length, 16);
+  assert.deepEqual(value?.frames?.[0], { t: 0, targets: [{ slot: 0, valid: true, x: -0, y: 0, speed: 0 }, { slot: 1, valid: true, x: -0, y: 1, speed: 0 }, { slot: 2, valid: false, x: -0, y: 2, speed: 0 }] });
+  assert.equal(value?.frames?.[15].t, 15);
+  assert.equal(value?.coordinates, undefined);
+  assert.equal(value?.truncated, true);
+  assert.ok(!JSON.stringify(value).includes("discard"));
+  assert.deepEqual(normalizeEvent(value), value);
+});
+
+test("direct radar captures expose x, y and speed without inventing missing coordinates", () => {
+  const value = normalizeEvent({ ...event, stage: "mqtt_received", input: { x: 0, y: -2.5, speed: 1.25, raw: "discard" } });
+  assert.deepEqual(value?.coordinates, { x: 0, y: -2.5, speed: 1.25 });
+  assert.equal(Object.hasOwn(value?.coordinates ?? {}, "z"), false);
+  assert.equal(normalizeEvent({ ...event, input: {} })?.coordinates, undefined);
+});
+
+test("vest logs retain bounded timed samples and redact non-sensor fields", () => {
+  const samples = Array.from({ length: 12 }, (_, t) => ({ t, ax: 0, ay: -1, az: 9.81, gx: 0.1, gy: 0.2, gz: -0.3, secret: "discard" }));
+  const value = normalizeEvent({ ...event, source: "vest", publicDeviceId: "eline-vest-000000000000", input: { totalCount: 12, samples } });
+  assert.equal(value?.samples?.length, 10);
+  assert.deepEqual(value?.samples?.[0], { t: 0, ax: 0, ay: -1, az: 9.81, gx: 0.1, gy: 0.2, gz: -0.3 });
+  assert.equal(value?.input?.az, 9.81);
+  assert.equal(value?.truncated, true);
+  assert.ok(!JSON.stringify(value).includes("discard"));
+  assert.deepEqual(normalizeEvent(value), value);
+});
+
+test("sensor previews reject malformed shapes and non-finite values on both normalization passes", () => {
+  const value = normalizeEvent({ ...event, input: { frames: [null, { t: Infinity, targets: [null, { slot: 0, valid: "true", x: Infinity, y: "secret", speed: NaN, token: "discard" }] }] } });
+  assert.deepEqual(value?.frames, [{ targets: [{ slot: 0 }] }]);
+  const normalized = normalizeEvent({ ...event, frames: [{ t: 1, targets: [{ x: 0, y: null, speed: -1, secret: "discard" }] }], samples: [{ ax: 0, secret: "discard" }] });
+  assert.deepEqual(normalized?.frames, [{ t: 1, targets: [{ x: 0, y: null, speed: -1 }] }]);
+  assert.equal(normalized?.samples, undefined);
+  assert.ok(!JSON.stringify(normalized).includes("discard"));
+});
+
+test("capture truncation distinguishes complete previews from upstream and local limits", () => {
+  const target = { slot: 0, valid: true, x: 0, y: 1, speed: 0 };
+  const capture = { ...event, truncated: false, input: { truncated: false, totalCount: 1, frames: [{ t: 0, targets: [target] }] } };
+  const complete = normalizeEvent(capture)!;
+  assert.equal(complete.truncated, false);
+  assert.equal(normalizeEvent(complete)?.truncated, false);
+  assert.equal(normalizeEvent({ ...capture, truncated: true })?.truncated, true);
+  assert.equal(normalizeEvent({ ...capture, input: { ...capture.input, truncated: true } })?.truncated, true);
+  assert.equal(normalizeEvent({ ...capture, input: { ...capture.input, totalCount: 3 } })?.truncated, true);
+  assert.equal(normalizeEvent({ ...capture, input: { frames: [{ t: 0, targets: Array(4).fill(target) }] } })?.truncated, true);
+  assert.equal(normalizeEvent({ ...event, source: "vest", publicDeviceId: "eline-vest-000000000000", input: { totalCount: 1, samples: [{ t: 0, ax: 0 }] } })?.truncated, false);
+});
+
+test("HTTP and SSE diagnostic responses retain sanitized sensor readings for the viewer", async () => {
+  const capture = { ...event, input: { frames: [{ t: 12, targets: [{ slot: 0, valid: true, x: 1.5, y: -2, speed: 0, secret: "discard" }] }] } };
+  const response = await invoke(request("events"), ["events"], async () => Response.json({ events: [capture] }));
+  const page = normalizeEvents(await response.json());
+  assert.deepEqual(page?.events[0].frames?.[0].targets[0], { slot: 0, valid: true, x: 1.5, y: -2, speed: 0 });
+  const stream = await invoke(request("stream"), ["stream"], async () => new Response(`id: 1\nevent: diagnostic\ndata: ${JSON.stringify(capture)}\n\n`, { headers: { "Content-Type": "text/event-stream" } }));
+  const body = await stream.text();
+  const data = body.split("\n").find((line) => line.startsWith("data: "))!.slice(6);
+  assert.deepEqual(normalizeEvent(JSON.parse(data))?.frames, page?.events[0].frames);
+  assert.ok(!body.includes("discard"));
+});
+
 test("inference and reason fields cannot carry arbitrary tokens", () => {
   for (const output of [{ modelVersion: "Bearer not-public" }, { featureVersion: "not-public" }, { decision: "not-public" }, { status: "not-public" }, { published: true }]) {
     assert.equal(normalizeEvent({ ...event, output }), null);

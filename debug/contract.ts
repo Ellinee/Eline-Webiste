@@ -2,6 +2,7 @@ export const stages = ["mqtt_received", "validated", "rejected", "buffered", "sk
 export type Stage = (typeof stages)[number];
 export type Source = "radar" | "vest";
 export type Summary = Record<string, string | number | boolean | null | number[]>;
+export interface RadarFrame { t?: number | null; targets: Summary[] }
 export interface DiagnosticEvent {
   id: string;
   cursor: string;
@@ -14,6 +15,8 @@ export interface DiagnosticEvent {
   latencyMs?: number;
   summary?: string;
   coordinates?: Summary;
+  frames?: RadarFrame[];
+  samples?: Summary[];
   input?: Summary & { preview?: number[] };
   output?: Summary;
   telemetry?: Summary;
@@ -69,14 +72,35 @@ export function normalizeEvent(value: unknown): DiagnosticEvent | null {
   const input = summary(data.input, [], ["totalCount", "previewCount", "frameCount", "targetCount", "sampleInterval", "windowMs", "sequence", "uptimeSeconds", ...axes]);
   const rawInput = record(data.input);
   const preview = Array.isArray(rawInput?.preview) ? rawInput.preview : [];
+  let truncated = data.truncated === true || rawInput?.truncated === true || preview.length > 12;
   if (input && preview.length) input.preview = preview.slice(0, 12).filter((v): v is number => number(v) !== undefined);
   if (input && rawInput?.values) Object.assign(input, summary(rawInput.values, [], axes));
-  const frames = Array.isArray(rawInput?.frames) ? rawInput.frames.slice(0, 16) : [];
-  const lastFrame = record(frames.at(-1));
-  const targets = Array.isArray(lastFrame?.targets) ? lastFrame.targets.slice(0, 3).map(record).filter((v) => v?.valid === true) : [];
-  const coordinates = summary(data.coordinates, [], ["x", "y", "z", "speed", "slot"]) ?? (targets.length === 1 ? summary(targets[0], [], ["x", "y", "speed", "slot"]) : undefined);
-  const samples = Array.isArray(rawInput?.samples) ? rawInput.samples.slice(0, 10) : [];
+  const isVest = source === "vest" || deviceId.startsWith("eline-vest-");
+  const rawFrames = rawInput?.frames ?? data.frames;
+  const frames: RadarFrame[] = !isVest && Array.isArray(rawFrames) ? rawFrames.slice(0, 16).flatMap((value) => {
+    const frame = record(value);
+    if (!frame || !Array.isArray(frame.targets)) return [];
+    const targets = frame.targets.slice(0, 3).flatMap((value) => {
+      const target = summary(value, [], ["slot", "x", "y", "z", "speed"], ["valid"]);
+      return target && Object.keys(target).length ? [target] : [];
+    });
+    if (frame.targets.length > targets.length) truncated = true;
+    const t = number(frame.t);
+    return [{ ...(t !== undefined ? { t } : frame.t === null ? { t: null } : {}), targets }];
+  }) : [];
+  const targets = frames.at(-1)?.targets.filter((target) => target.valid === true) ?? [];
+  const coordinatePreview = summary(data.coordinates, [], ["x", "y", "z", "speed", "slot"]);
+  const directCoordinates = !isVest ? summary(rawInput?.values ?? rawInput, [], ["x", "y", "z", "speed", "slot"]) : undefined;
+  const coordinates = coordinatePreview && Object.keys(coordinatePreview).length ? coordinatePreview : targets.length === 1 ? summary(targets[0], [], ["x", "y", "z", "speed", "slot"]) : directCoordinates && Object.keys(directCoordinates).length ? directCoordinates : undefined;
+  const rawSamples = rawInput?.samples ?? data.samples;
+  const samples = isVest && Array.isArray(rawSamples) ? rawSamples.slice(0, 10).flatMap((value) => {
+    const sample = summary(value, [], ["t", ...axes]);
+    return sample && axes.some((axis) => Object.hasOwn(sample, axis)) ? [sample] : [];
+  }) : [];
   if (input && samples.length) Object.assign(input, summary(samples.at(-1), [], axes));
+  const rawReadings = isVest ? rawSamples : rawFrames;
+  const readingCount = isVest ? samples.length : frames.length;
+  if (Array.isArray(rawReadings) && (rawReadings.length > readingCount || (number(rawInput?.totalCount, 0) ?? 0) > readingCount)) truncated = true;
   const output = summary(data.output, ["status", "decision", "modelVersion", "featureVersion"], ["probability", "threshold", "frameCount", "sampleCount", "coverage", "sampleInterval", "durationMs", "windowStartT", "windowEndT"], ["published"]);
   for (const key of ["probability", "threshold"]) if (output && output[key] !== null && number(output[key], 0, 1) === undefined) delete output[key];
   if (rawOutput?.decision === null && output) output.decision = null;
@@ -87,9 +111,10 @@ export function normalizeEvent(value: unknown): DiagnosticEvent | null {
     id, cursor, at, source, stage: data.stage as Stage, deviceId,
     sourceId: typeof data.sourceId === "string" && /^(?:radar|vest):[0-9a-f-]{36}:[1-9]\d{0,15}$/.test(data.sourceId) ? data.sourceId : undefined, reason: text(data.reason),
     latencyMs: number(data.latencyMs ?? data.durationMs, 0, 86_400_000),
-    coordinates, input, output: output && Object.keys(output).length ? output : undefined,
+    coordinates, frames: frames.length ? frames : undefined, samples: samples.length ? samples : undefined,
+    input, output: output && Object.keys(output).length ? output : undefined,
     telemetry: telemetry && Object.keys(telemetry).length ? telemetry : undefined,
-    truncated: data.truncated === true || preview.length > 12 || rawInput?.truncated === true || frames.length > 0 || samples.length > 0,
+    truncated,
   };
 }
 

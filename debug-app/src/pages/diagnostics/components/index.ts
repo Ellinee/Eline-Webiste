@@ -1,2 +1,2 @@
-export { EventDetail } from "./EventDetail";
+export { EventDetail, SensorValues } from "./EventDetail";
 export { SourceStatus } from "./SourceStatus";
