@@ -69,7 +69,7 @@ export function normalizeEvent(value: unknown): DiagnosticEvent | null {
   const rawOutput = record(data.output);
   if (data.reason !== undefined && !reasons.includes(String(data.reason))) return null;
   if (rawOutput && Object.entries(outputValidators).some(([key, validate]) => rawOutput[key] !== undefined && !validate(rawOutput[key]))) return null;
-  const input = summary(data.input, [], ["totalCount", "previewCount", "frameCount", "targetCount", "sampleInterval", "windowMs", "sequence", "uptimeSeconds", ...axes]);
+  const input = summary(data.input, [], ["t", "totalCount", "previewCount", "frameCount", "targetCount", "sampleInterval", "windowMs", "sequence", "uptimeSeconds", ...axes]);
   const rawInput = record(data.input);
   const preview = Array.isArray(rawInput?.preview) ? rawInput.preview : [];
   let truncated = data.truncated === true || rawInput?.truncated === true || preview.length > 12;
@@ -89,9 +89,9 @@ export function normalizeEvent(value: unknown): DiagnosticEvent | null {
     return [{ ...(t !== undefined ? { t } : frame.t === null ? { t: null } : {}), targets }];
   }) : [];
   const targets = frames.at(-1)?.targets.filter((target) => target.valid === true) ?? [];
-  const coordinatePreview = summary(data.coordinates, [], ["x", "y", "z", "speed", "slot"]);
-  const directCoordinates = !isVest ? summary(rawInput?.values ?? rawInput, [], ["x", "y", "z", "speed", "slot"]) : undefined;
-  const coordinates = coordinatePreview && Object.keys(coordinatePreview).length ? coordinatePreview : targets.length === 1 ? summary(targets[0], [], ["x", "y", "z", "speed", "slot"]) : directCoordinates && Object.keys(directCoordinates).length ? directCoordinates : undefined;
+  const coordinatePreview = summary(data.coordinates, [], ["x", "y", "z", "speed", "slot"], ["valid"]);
+  const directCoordinates = !isVest ? summary(rawInput?.values ?? rawInput, [], ["x", "y", "z", "speed", "slot"], ["valid"]) : undefined;
+  const coordinates = coordinatePreview && Object.keys(coordinatePreview).length ? coordinatePreview : targets.length === 1 ? summary(targets[0], [], ["x", "y", "z", "speed", "slot"], ["valid"]) : directCoordinates && Object.keys(directCoordinates).length ? directCoordinates : undefined;
   const rawSamples = rawInput?.samples ?? data.samples;
   const samples = isVest && Array.isArray(rawSamples) ? rawSamples.slice(0, 10).flatMap((value) => {
     const sample = summary(value, [], ["t", ...axes]);

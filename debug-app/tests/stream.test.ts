@@ -4,6 +4,8 @@ import { subscribeEvents } from "../src/api/diagnostics/stream.ts";
 import { apiClient, queryClient } from "../src/config/index.ts";
 import { queryKeys } from "../src/api/queryKeys.ts";
 import { statusFixture } from "../../tests/debug.fixture.ts";
+import { appendEvents } from "../src/lib/events.ts";
+import type { DiagnosticEvent } from "../src/types/index.ts";
 
 class FakeSource extends EventTarget {
   static instances: FakeSource[] = [];
@@ -55,6 +57,33 @@ test("reconnect budget ends after five retries with no parallel sources", async 
     assert.equal(connection, "offline");
     assert.equal(FakeSource.instances.length - start, 6);
     assert.ok(FakeSource.instances.slice(start).every((source) => source.closed));
+  } finally { stop(); apiClient.defaults.adapter = adapter; Object.assign(globalThis, { EventSource: originalSource }); }
+});
+
+test("reconnect advances past every nonvalidated event and checkpoint without storing them", async (context) => {
+  context.mock.timers.enable({ apis: ["setTimeout"] });
+  const originalSource = globalThis.EventSource;
+  const adapter = apiClient.defaults.adapter;
+  Object.assign(globalThis, { EventSource: FakeSource });
+  apiClient.defaults.adapter = async (config) => ({ config, data: { authenticated: true, expiresAt: "2030-01-01T00:00:00Z", devices: ["eline-radar-000000000000"] }, status: 200, statusText: "OK", headers: {} });
+  let events: DiagnosticEvent[] = [];
+  let cursor = "";
+  const stop = subscribeEvents({ signal: new AbortController().signal, onCursor: (value) => { cursor = value; }, onEvent: (event) => { cursor = event.cursor; events = appendEvents(events, [event]); }, onConnection: () => {}, onGap: () => { assert.fail("Unexpected gap"); } });
+  try {
+    const source = FakeSource.instances.at(-1)!;
+    for (const [index, stage] of ["validated", "mqtt_received", "rejected", "inference", "kafka_delivered", "buffered"].entries()) {
+      source.dispatchEvent(new MessageEvent("diagnostic", { data: JSON.stringify({ id: String(index), cursor: `a:${index}`, source: "radar", stage, at: "2026-09-30T10:00:00Z", deviceId: "eline-radar-000000000000" }) }));
+    }
+    assert.equal(cursor, "a:5");
+    assert.equal(events.length, 1);
+    assert.equal(events[0].stage, "validated");
+    source.onerror?.();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    context.mock.timers.tick(1000);
+    assert.equal(FakeSource.instances.at(-1)!.url, "/debug/api/stream?cursor=a%3A5");
+    FakeSource.instances.at(-1)!.dispatchEvent(new MessageEvent("checkpoint", { data: '{"cursor":"a:8"}' }));
+    assert.equal(cursor, "a:8");
+    assert.equal(events.length, 1);
   } finally { stop(); apiClient.defaults.adapter = adapter; Object.assign(globalThis, { EventSource: originalSource }); }
 });
 

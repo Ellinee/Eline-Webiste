@@ -48,9 +48,12 @@ export function SourceStatus({ value, failed = false }: { value: DiagnosticStatu
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   const status = normalizeStatus(value, now);
   if (!status) return <p role="alert">Invalid source status. Readiness is unknown.</p>;
-  return <section aria-label="Source readiness">
-    <div className="source-status-grid"><Source name="Radar" source={status.sources.radar} failed={failed} /><Source name="Vest" source={status.sources.vest} failed={failed} /></div>
-    <p className="view-note">BE memory: {status.retention.events}/{status.retention.maxEvents} events · {status.retention.bytes}/{status.retention.maxBytes} bytes · {status.retention.ttlSeconds} s retention · {status.retention.maxEventBytes} bytes/event. Dropped: {status.sources.radar.dropped + status.sources.vest.dropped}. Source resets: {status.sources.radar.resetCount + status.sources.vest.resetCount}.</p>
-    <p className="muted">Status is shared by BE and polled every {status.statusPolicy.pollIntervalMs / 1000} s; timeout {status.statusPolicy.timeoutMs / 1000} s; stale after {status.statusPolicy.staleAfterMs / 1000} s or any failed status request. A connected event feed does not imply source readiness.</p>
+  return <section className="source-readiness" aria-label="Source readiness">
+    <div className="readiness-summary">{Object.entries(status.sources).map(([key, source]) => <p key={key}><strong>{key === "radar" ? "Radar" : "Vest"}</strong> · {failed || source.status.readiness.ready === "stale" ? "Stale" : source.status.readiness.ready === true ? "Ready" : source.status.readiness.ready === false ? "Not ready" : "Unknown"} · Event feed: {failed ? "stale" : source.state.replaceAll("_", " ")}</p>)}</div>
+    <details><summary>Source details</summary>
+      <div className="source-status-grid"><Source name="Radar" source={status.sources.radar} failed={failed} /><Source name="Vest" source={status.sources.vest} failed={failed} /></div>
+      <p className="view-note">BE memory: {status.retention.events}/{status.retention.maxEvents} events · {status.retention.bytes}/{status.retention.maxBytes} bytes · {status.retention.ttlSeconds} s retention · {status.retention.maxEventBytes} bytes/event. Dropped: {status.sources.radar.dropped + status.sources.vest.dropped}. Source resets: {status.sources.radar.resetCount + status.sources.vest.resetCount}.</p>
+      <p className="muted">Status is shared by BE and polled every {status.statusPolicy.pollIntervalMs / 1000} s; timeout {status.statusPolicy.timeoutMs / 1000} s; stale after {status.statusPolicy.staleAfterMs / 1000} s or any failed status request. A connected event feed does not imply source readiness.</p>
+    </details>
   </section>;
 }

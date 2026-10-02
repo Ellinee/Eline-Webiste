@@ -40,7 +40,7 @@ export function useDiagnostics(devices: string[]) {
         onGap: () => { setHasGap(true); setConnection("offline"); },
         onEvent: (event) => {
           cursor.current = event.cursor;
-          if (allowed.has(event.deviceId)) { events.current = appendEvents(events.current, [event]); isDirty = true; }
+          if (allowed.has(event.deviceId) && event.stage === "validated") { events.current = appendEvents(events.current, [event]); isDirty = true; }
         },
       });
     }).catch(() => { if (!controller.signal.aborted) { setHasError(true); setConnection("offline"); } }).finally(() => { if (!controller.signal.aborted) setIsLoading(false); });

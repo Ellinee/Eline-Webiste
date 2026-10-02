@@ -45,6 +45,32 @@ test("direct radar captures expose x, y and speed without inventing missing coor
   assert.equal(normalizeEvent({ ...event, input: {} })?.coordinates, undefined);
 });
 
+test("direct validated captures preserve device time, validity and floats through both normalization passes", () => {
+  const value = normalizeEvent({ ...event, stage: "validated", input: { t: 12345, slot: 0, valid: false, x: 0, y: -2.5123456789, speed: -0.125, secret: "discard" } });
+  assert.equal(value?.input?.t, 12345);
+  assert.deepEqual(value?.coordinates, { x: 0, y: -2.5123456789, speed: -0.125, slot: 0, valid: false });
+  assert.equal(Object.hasOwn(value?.coordinates ?? {}, "z"), false);
+  assert.deepEqual(normalizeEvent(value), value);
+  assert.ok(!JSON.stringify(value).includes("discard"));
+});
+
+test("legacy explicitly supplied Z remains compatible but is never synthesized", () => {
+  const value = normalizeEvent({ ...event, coordinates: { x: 1, y: 2, z: 3, speed: 0 } });
+  assert.equal(value?.coordinates?.z, 3);
+  assert.deepEqual(normalizeEvent(value), value);
+});
+
+test("validated Vest passthrough preserves raw axes and time without changing its Radar service", () => {
+  const value = normalizeEvent({ ...event, stage: "validated", publicDeviceId: "eline-vest-000000000000", input: { t: 12345, values: { ax: 0, ay: -1.23456789, az: 9.81, gx: 0.1, gy: 0.2, gz: -0.3, secret: "discard" } } });
+  assert.equal(value?.source, "radar");
+  assert.equal(value?.input?.t, 12345);
+  assert.equal(value?.input?.ay, -1.23456789);
+  assert.equal(value?.frames, undefined);
+  assert.equal(value?.coordinates, undefined);
+  assert.deepEqual(normalizeEvent(value), value);
+  assert.ok(!JSON.stringify(value).includes("discard"));
+});
+
 test("vest logs retain bounded timed samples and redact non-sensor fields", () => {
   const samples = Array.from({ length: 12 }, (_, t) => ({ t, ax: 0, ay: -1, az: 9.81, gx: 0.1, gy: 0.2, gz: -0.3, secret: "discard" }));
   const value = normalizeEvent({ ...event, source: "vest", publicDeviceId: "eline-vest-000000000000", input: { totalCount: 12, samples } });
