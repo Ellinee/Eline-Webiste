@@ -116,6 +116,72 @@ test("HTTP and SSE diagnostic responses retain sanitized sensor readings for the
   assert.ok(!body.includes("discard"));
 });
 
+for (const [source, featureVersion, modelVersion] of [
+  ["radar", "v2_rate_invariant", "a".repeat(64)],
+  ["radar", "v3_timestamp_resampled", "a".repeat(64)],
+  ["vest", `sha256:${"b".repeat(64)}`, "20260919085908"],
+]) {
+  const capture = { ...event, source, publicDeviceId: `eline-${source}-000000000000`, output: { ...event.output, modelVersion, featureVersion } };
+
+  test(`${source} inference retains ${featureVersion} across both normalization boundaries`, () => {
+    const result = normalizeEvent(capture);
+    assert.equal(result?.output?.featureVersion, featureVersion);
+    assert.equal(result?.output?.modelVersion, modelVersion);
+    assert.equal(result?.output?.threshold, 0.24);
+    assert.equal(result?.output?.decision, "normal");
+    assert.equal(result?.output?.probability, 0.1);
+    assert.deepEqual(normalizeEvent(result), result);
+    const page = normalizeEvents({ events: [capture] });
+    assert.deepEqual(page?.events, [result]);
+    assert.deepEqual(normalizeEvents(page), page);
+    assert.ok(!JSON.stringify(page).includes("discard"));
+  });
+
+  test(`HTTP events proxy retains ${source} ${featureVersion} through viewer normalization`, async () => {
+    const response = await invoke(request("events"), ["events"], async () => Response.json({ events: [capture] }));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    const page = normalizeEvents(body);
+    assert.equal(page?.events[0].output?.featureVersion, featureVersion);
+    assert.deepEqual(page, normalizeEvents({ events: [capture] }));
+    assert.deepEqual(JSON.parse(JSON.stringify(page)), body);
+    assert.ok(!JSON.stringify(body).includes("discard"));
+  });
+
+  for (const kind of ["diagnostic", "events"]) {
+    test(`SSE ${kind} proxy retains ${source} ${featureVersion} through viewer normalization`, async () => {
+      const value = kind === "events" ? { events: [capture] } : capture;
+      const response = await invoke(request("stream"), ["stream"], async () => new Response(`id: 1\nevent: ${kind}\ndata: ${JSON.stringify(value)}\n\n`, { headers: { "Content-Type": "text/event-stream" } }));
+      assert.equal(response.status, 200);
+      const body = await response.text();
+      assert.match(body, /event: diagnostic/);
+      assert.match(body, /id: 1/);
+      const data = JSON.parse(body.split("\n").find((line) => line.startsWith("data: "))!.slice(6));
+      const result = normalizeEvent(data);
+      assert.equal(result?.output?.featureVersion, featureVersion);
+      assert.deepEqual(result, normalizeEvent(capture));
+      assert.deepEqual(JSON.parse(JSON.stringify(result)), data);
+      assert.ok(!body.includes("discard"));
+    });
+  }
+}
+
+test("inference rejects unknown versions through normalization, HTTP and both SSE event formats", async () => {
+  for (const featureVersion of ["v3_unknown", "v4_timestamp_resampled", "v3_timestamp_resampled-extra", " v3_timestamp_resampled", "V3_timestamp_resampled", `sha256:${"b".repeat(63)}`]) {
+    const capture = { ...event, output: { ...event.output, featureVersion } };
+    assert.equal(normalizeEvent(capture), null, featureVersion);
+    assert.equal(normalizeEvents({ events: [capture] }), null, featureVersion);
+    const response = await invoke(request("events"), ["events"], async () => Response.json({ events: [capture] }));
+    assert.equal(response.status, 502);
+    assert.equal((await response.text()).includes(featureVersion), false);
+    for (const kind of ["diagnostic", "events"]) {
+      const value = kind === "events" ? { events: [capture] } : capture;
+      const stream = await invoke(request("stream"), ["stream"], async () => new Response(`event: ${kind}\ndata: ${JSON.stringify(value)}\n\n`, { headers: { "Content-Type": "text/event-stream" } }));
+      await assert.rejects(stream.text(), /Diagnostics stream unavailable/);
+    }
+  }
+});
+
 test("inference and reason fields cannot carry arbitrary tokens", () => {
   for (const output of [{ modelVersion: "Bearer not-public" }, { featureVersion: "not-public" }, { decision: "not-public" }, { status: "not-public" }, { published: true }]) {
     assert.equal(normalizeEvent({ ...event, output }), null);

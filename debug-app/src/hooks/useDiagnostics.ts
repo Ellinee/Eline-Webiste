@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { getEvents, subscribeEvents } from "@/api";
-import { appendEvents } from "@/lib";
+import { DiagnosticEventStore } from "@/lib/events";
 import type { Connection, DiagnosticEvent } from "@/types";
 
 export function useDiagnostics(devices: string[]) {
-  const events = useRef<DiagnosticEvent[]>([]);
+  const events = useRef(new DiagnosticEventStore());
   const cursor = useRef<string | undefined>(undefined);
+  const needsSnapshot = useRef(false);
+  const previousDevices = useRef(devices.join("|"));
   const [visibleEvents, setVisibleEvents] = useState<DiagnosticEvent[]>([]);
   const [generation, setGeneration] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -16,41 +18,105 @@ export function useDiagnostics(devices: string[]) {
   const [isTruncated, setIsTruncated] = useState(false);
   const deviceKey = devices.join("|");
   useEffect(() => {
-    if (isPaused || hasGap) return;
+    if (isPaused) return;
     const allowed = new Set(deviceKey.split("|"));
-    const controller = new AbortController();
+    if (previousDevices.current !== deviceKey) {
+      previousDevices.current = deviceKey;
+      events.current.clear();
+      cursor.current = undefined;
+      needsSnapshot.current = true;
+    }
+    let stopped = false;
+    let controller: AbortController | undefined;
     let close = () => {};
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let flushTimer: ReturnType<typeof setInterval> | undefined;
+    let attempts = 0;
     let isDirty = false;
-    const flush = setInterval(() => { if (isDirty) { setVisibleEvents(events.current); isDirty = false; } }, 1000);
-    const stop = () => { controller.abort(); close(); clearInterval(flush); };
+    const flush = () => {
+      if (isDirty && !stopped) { setVisibleEvents(events.current.snapshot()); isDirty = false; }
+    };
+    const disconnect = () => {
+      controller?.abort();
+      close();
+      close = () => {};
+      clearInterval(flushTimer);
+      flushTimer = undefined;
+    };
+    const stop = () => {
+      stopped = true;
+      disconnect();
+      clearTimeout(retryTimer);
+      retryTimer = undefined;
+    };
+    const recover = (gap: boolean) => {
+      if (stopped) return;
+      disconnect();
+      clearTimeout(retryTimer);
+      if (gap) {
+        needsSnapshot.current = true;
+        setHasGap(true);
+      }
+      if (++attempts > 5) {
+        setHasError(true);
+        setIsLoading(false);
+        setConnection("offline");
+        return;
+      }
+      setConnection("reconnecting");
+      retryTimer = setTimeout(() => { retryTimer = undefined; void connect(); }, Math.min(1000 * 2 ** (attempts - 1), 16000));
+    };
+    const connect = async () => {
+      if (stopped) return;
+      const request = new AbortController();
+      controller = request;
+      const current = () => !stopped && controller === request && !request.signal.aborted;
+      try {
+        const fresh = needsSnapshot.current;
+        const page = await getEvents(request.signal, fresh ? undefined : cursor.current);
+        if (!current()) return;
+        if (page.gap) { recover(true); return; }
+        if (fresh && !page.cursor) throw new Error("Missing recovery cursor");
+        if (fresh) events.current.clear();
+        for (const event of page.events) if (allowed.has(event.deviceId)) events.current.append(event);
+        cursor.current = page.cursor ?? cursor.current;
+        needsSnapshot.current = false;
+        setIsTruncated(page.truncated);
+        setVisibleEvents(events.current.snapshot());
+        isDirty = false;
+        setHasError(false);
+        setIsLoading(false);
+        flushTimer = setInterval(flush, 1000);
+        close = subscribeEvents({
+          cursor: cursor.current,
+          signal: request.signal,
+          onConnection: (value) => {
+            if (!current()) return;
+            setConnection(value);
+            if (value === "offline") { flush(); disconnect(); }
+          },
+          onCursor: (value) => { if (current()) cursor.current = value; },
+          onGap: () => { if (current()) recover(true); },
+          onEvent: (event) => {
+            if (!current()) return;
+            cursor.current = event.cursor;
+            if (allowed.has(event.deviceId) && event.stage === "validated") { events.current.append(event); isDirty = true; }
+          },
+        });
+      } catch {
+        if (current()) recover(false);
+      }
+    };
     window.addEventListener("debug:stop", stop);
-    void getEvents(controller.signal, cursor.current).then((page) => {
-      if (controller.signal.aborted) return;
-      if (page.gap) { setHasGap(true); setConnection("offline"); return; }
-      events.current = appendEvents(events.current, page.events.filter((event) => allowed.has(event.deviceId)));
-      cursor.current = page.cursor ?? cursor.current;
-      setIsTruncated(page.truncated);
-      setVisibleEvents(events.current);
-      setHasError(false);
-      close = subscribeEvents({
-        cursor: cursor.current,
-        signal: controller.signal,
-        onConnection: setConnection,
-        onCursor: (value) => { cursor.current = value; },
-        onGap: () => { setHasGap(true); setConnection("offline"); },
-        onEvent: (event) => {
-          cursor.current = event.cursor;
-          if (allowed.has(event.deviceId) && event.stage === "validated") { events.current = appendEvents(events.current, [event]); isDirty = true; }
-        },
-      });
-    }).catch(() => { if (!controller.signal.aborted) { setHasError(true); setConnection("offline"); } }).finally(() => { if (!controller.signal.aborted) setIsLoading(false); });
-    return () => { stop(); clearInterval(flush); window.removeEventListener("debug:stop", stop); };
-  }, [deviceKey, generation, isPaused, hasGap]);
+    void connect();
+    return () => { stop(); window.removeEventListener("debug:stop", stop); };
+  }, [deviceKey, generation, isPaused]);
   const handlePause = () => { setIsPaused((value) => !value); setConnection("reconnecting"); };
   const handleReset = () => {
-    events.current = [];
+    events.current.clear();
     setVisibleEvents([]);
     cursor.current = undefined;
+    needsSnapshot.current = true;
     setHasGap(false);
     setHasError(false);
     setIsPaused(false);

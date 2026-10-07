@@ -1,6 +1,19 @@
 import { maxEvents } from "@/constants";
 import type { DiagnosticEvent, Source, Summary } from "@/types";
 
+export class DiagnosticEventStore {
+  private entries = new Map<string, DiagnosticEvent>();
+
+  append(event: DiagnosticEvent) {
+    if (event.stage !== "validated") return;
+    this.entries.set(event.cursor, event);
+    if (this.entries.size > maxEvents) this.entries.delete(this.entries.keys().next().value!);
+  }
+
+  clear() { this.entries.clear(); }
+  snapshot() { return [...this.entries.values()]; }
+}
+
 export function appendEvents(current: DiagnosticEvent[], incoming: DiagnosticEvent[]): DiagnosticEvent[] {
   const map = new Map(current.filter((event) => event.stage === "validated").map((event) => [event.cursor, event]));
   for (const event of incoming) if (event.stage === "validated") map.set(event.cursor, event);
