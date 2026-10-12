@@ -5,7 +5,7 @@ import { handleDebugRequest } from "../debug/proxy.ts";
 
 import { statusFixture, observedAt as at } from "./debug.fixture.ts";
 
-for (const featureVersion of ["v2_rate_invariant", "v3_timestamp_resampled"]) {
+for (const featureVersion of ["v2_rate_invariant", "v3_timestamp_resampled", "v4_native_cadence"]) {
   const fixture = () => {
     const value = statusFixture();
     value.sources.radar.status.snapshot.model.featureVersion = featureVersion;

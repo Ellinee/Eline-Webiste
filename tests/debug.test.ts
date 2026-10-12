@@ -119,6 +119,7 @@ test("HTTP and SSE diagnostic responses retain sanitized sensor readings for the
 for (const [source, featureVersion, modelVersion] of [
   ["radar", "v2_rate_invariant", "a".repeat(64)],
   ["radar", "v3_timestamp_resampled", "a".repeat(64)],
+  ["radar", "v4_native_cadence", "a".repeat(64)],
   ["vest", `sha256:${"b".repeat(64)}`, "20260919085908"],
 ]) {
   const capture = { ...event, source, publicDeviceId: `eline-${source}-000000000000`, output: { ...event.output, modelVersion, featureVersion } };
