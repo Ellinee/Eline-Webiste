@@ -41,7 +41,7 @@ const outputValidators: Record<string, (value: unknown) => boolean> = {
   status: (v) => typeof v === "string" && ["ok", "insufficient_data", "invalid_units"].includes(v),
   decision: (v) => v === null || v === "normal" || v === "possible_fall",
   modelVersion: (v) => typeof v === "string" && /^(?:[0-9a-f]{64}|[0-9]{14})$/.test(v),
-  featureVersion: (v) => typeof v === "string" && (["v2_rate_invariant", "v3_timestamp_resampled"].includes(v) || /^sha256:[0-9a-f]{64}$/.test(v)),
+  featureVersion: (v) => typeof v === "string" && (["v2_rate_invariant", "v3_timestamp_resampled", "v4_native_cadence"].includes(v) || /^sha256:[0-9a-f]{64}$/.test(v)),
   sensorStatus: (v) => v === "ok",
   published: (v) => v === false,
 };
